@@ -45,7 +45,7 @@ body {
   font-size: 1rem;
   line-height: 1.45;
 }
-p, h1 { margin: 0; }
+p, h1, h2, h3 { margin: 0; }
 
 .pagina {
   max-width: 30rem;
@@ -165,6 +165,23 @@ h1 {
   cursor: pointer;
 }
 
+/* Apartado de líderes: siempre visible, un bloque por sector con sus sublíneas. */
+.lideres { display: flex; flex-direction: column; gap: 4px; padding-top: 24px; border-top: 2px solid var(--tinta); }
+.lideres h2 {
+  font-family: var(--titular);
+  font-weight: 800;
+  font-size: clamp(1.45rem, 6.8vw, 1.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin-bottom: 12px;
+}
+.grupo { display: flex; flex-direction: column; gap: 12px; padding-block: 16px; border-top: 1px solid var(--linea); }
+.grupo h3 { font-family: var(--titular); font-weight: 700; font-size: 1.25rem; line-height: 1.15; text-wrap: balance; }
+.sublinea { display: flex; flex-direction: column; gap: 2px; }
+.sublinea .rotulo { color: var(--tenue); }
+.lider { font-weight: 600; font-size: 1.0625rem; overflow-wrap: anywhere; }
+
 @media (prefers-reduced-motion: no-preference) {
   .escarapela:not(.vacia) { animation: aparecer 0.28s ease-out; }
   @keyframes aparecer { from { transform: translateY(8px); opacity: 0.4; } to { transform: none; opacity: 1; } }
@@ -185,6 +202,10 @@ h1 {
   </form>
 
   <section id="resultado" aria-live="polite"></section>
+
+  <section class="lideres" id="lideres" aria-labelledby="titulo-lideres">
+    <h2 id="titulo-lideres">Conoce a la persona líder de tu sector</h2>
+  </section>
 </main>
 
 <script>
@@ -397,6 +418,30 @@ function actualizar() {
     ? 'Encontramos varias personas. Toca tu nombre:'
     : 'No hay una coincidencia exacta. ¿Eres alguna de estas personas?');
 }
+
+// ---------- Líderes por sector ----------
+// Listado de líderes: cada sector trae sus sublíneas y, en cada una, los nombres de sus líderes.
+const LIDERES = [{"sector": "Educación", "sublineas": [{"nombre": "Convivencia", "lideres": ["Oswaldo Carmona García"]}, {"nombre": "Discapacidad", "lideres": ["María Alejandra López Parra"]}, {"nombre": "PAE", "lideres": ["Yohan Pablo Zapata"]}, {"nombre": "Educación", "lideres": ["Julián Aguirre Chica", "Sebastián Valencia"]}]}, {"sector": "Planeación", "sublineas": [{"nombre": "Proyectos estratégicos", "lideres": ["John Armando Chica Osorio"]}, {"nombre": "Planeación", "lideres": ["Faber Martínez"]}]}, {"sector": "Desarrollo económico y turismo", "sublineas": [{"nombre": "Desarrollo económico", "lideres": ["Juan Camilo Aguirre"]}, {"nombre": "Desarrollo rural", "lideres": ["Natali Urrego Vargas"]}, {"nombre": "Turismo", "lideres": ["Robinson González"]}, {"nombre": "Desarrollo comunitario", "lideres": ["David Valencia Valencia"]}]}, {"sector": "Gobierno", "sublineas": [{"nombre": "Gobierno y seguridad", "lideres": ["Andrés Arroyave"]}, {"nombre": "Tecnología", "lideres": ["Santiago Montoya"]}]}, {"sector": "Salud", "sublineas": [{"nombre": "Salud", "lideres": ["Claudia Selene Mosquera Castrillón", "Jesús David Bedoya"]}]}, {"sector": "Familia", "sublineas": [{"nombre": "Mujeres", "lideres": ["María Cecilia Martínez", "Sara Mosquera"]}, {"nombre": "Adulto mayor", "lideres": ["Elda Lucía Patiño Carmona"]}]}, {"sector": "Comunicaciones", "sublineas": [{"nombre": "Comunicaciones", "lideres": ["Luis Guillermo Carmona Álvarez"]}]}, {"sector": "Cultura", "sublineas": [{"nombre": "Cultura", "lideres": ["Sara Gómez Álvarez"]}]}, {"sector": "Juventud", "sublineas": [{"nombre": "Juventud", "lideres": ["Sara Mosquera"]}]}, {"sector": "Deporte", "sublineas": [{"nombre": "Deporte", "lideres": ["Julián Martínez", "Ricardo Valencia"]}]}, {"sector": "Infraestructura", "sublineas": [{"nombre": "Infraestructura", "lideres": ["Juan Pablo Ospina Benito"]}, {"nombre": "Movilidad", "lideres": ["Wilmer H. López G."]}, {"nombre": "Vivienda", "lideres": ["Norman Ríos"]}]}, {"sector": "Servicios públicos y medio ambiente", "sublineas": [{"nombre": "Servicios públicos", "lideres": ["Luisa María Torres Ramírez"]}]}];
+
+// Dibuja el apartado una sola vez al cargar; no depende de lo que se busque.
+function mostrarLideres() {
+  const apartado = document.getElementById('lideres');
+  for (const grupo of LIDERES) {
+    const bloque = crear('div', 'grupo');
+    bloque.append(crear('h3', '', grupo.sector));
+    // Si el sector tiene una sola sublínea y se llama igual ("Cultura / Cultura"),
+    // repetir el nombre no aporta: se muestran solo las personas.
+    const repetida = grupo.sublineas.length === 1 && grupo.sublineas[0].nombre === grupo.sector;
+    for (const sublinea of grupo.sublineas) {
+      const fila = crear('div', 'sublinea');
+      if (!repetida) fila.append(crear('p', 'rotulo', sublinea.nombre));
+      for (const lider of sublinea.lideres) fila.append(crear('p', 'lider', lider));
+      bloque.append(fila);
+    }
+    apartado.append(bloque);
+  }
+}
+mostrarLideres();
 
 campo.addEventListener('input', actualizar);
 // Al tocar "Buscar" en el teclado no se envía nada: solo se cierra el teclado.
