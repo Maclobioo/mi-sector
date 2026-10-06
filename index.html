@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Cuál es mi sector?</title>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..600&display=swap">
+<style>
+/* Diseño: una sola columna pensada para el celular; el resultado se muestra como una escarapela de evento. */
+:root {
+  --fondo: #E9EFEC;
+  --superficie: #FFFFFF;
+  --tinta: #12292A;
+  --tenue: #55696A;
+  --linea: #C3D1CC;
+  --acento: #0A6B5E;
+  --acento-tinta: #FFFFFF;
+  --banda: #F4B93A;
+  --banda-tinta: #2A1F00;
+  --titular: "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --texto: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #0E1A1B; --superficie: #182829; --tinta: #E7EFEC; --tenue: #9DB0AE;
+    --linea: #33494B; --acento: #58C7B3; --acento-tinta: #06211D;
+    --banda: #F4B93A; --banda-tinta: #2A1F00; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fondo: #0E1A1B; --superficie: #182829; --tinta: #E7EFEC; --tenue: #9DB0AE;
+  --linea: #33494B; --acento: #58C7B3; --acento-tinta: #06211D;
+  --banda: #F4B93A; --banda-tinta: #2A1F00; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+p, h1 { margin: 0; }
+
+.pagina {
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-inline: 20px;
+  padding-block: 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.encabezado { display: flex; flex-direction: column; gap: 8px; }
+h1 {
+  font-family: var(--titular);
+  font-weight: 800;
+  font-size: clamp(2rem, 10vw, 2.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.entrada-texto { color: var(--tenue); font-size: 1.0625rem; }
+
+.buscador { display: flex; flex-direction: column; gap: 8px; }
+.buscador label { font-weight: 600; font-size: 0.9375rem; }
+.buscador input {
+  width: 100%;
+  font: inherit;
+  font-size: 1.1875rem; /* por encima de 16px para que iPhone no haga zoom al tocar el campo */
+  padding: 14px 16px;
+  color: var(--tinta);
+  background: var(--superficie);
+  border: 2px solid var(--linea);
+  border-radius: 12px;
+}
+.buscador input::placeholder { color: var(--tenue); opacity: 0.75; }
+.buscador input:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; border-color: var(--acento); }
+.ayuda { color: var(--tenue); font-size: 0.875rem; }
+
+#resultado { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.aviso { font-weight: 600; }
+.aviso-secundario { color: var(--tenue); }
+
+.candidatos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.candidatos button {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  padding: 14px 16px;
+  color: var(--tinta);
+  background: var(--superficie);
+  border: 2px solid var(--linea);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.candidatos button:hover { border-color: var(--acento); }
+.candidatos button:focus-visible, .otro:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+/* La escarapela: tarjeta con la ranura del cordón arriba y el sector en una banda de color. */
+.escarapela {
+  background: var(--superficie);
+  border: 2px solid var(--tinta);
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ranura {
+  align-self: center;
+  width: 64px; height: 12px;
+  margin-block: 16px 4px;
+  border-radius: 6px;
+  background: var(--fondo);
+  border: 2px solid var(--tinta);
+}
+.persona {
+  padding: 12px 20px 18px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+.banda { background: var(--banda); color: var(--banda-tinta); padding: 18px 20px 22px; }
+.rotulo {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sector {
+  font-family: var(--titular);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 9.5vw, 2.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin-top: 4px;
+}
+.subsector { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 2px; }
+.subsector .rotulo { color: var(--tenue); }
+.subsector .valor { font-size: 1.125rem; font-weight: 600; }
+
+.escarapela.vacia { border-style: dashed; border-color: var(--linea); background: transparent; }
+.escarapela.vacia .ranura { border-color: var(--linea); background: transparent; }
+.escarapela.vacia .persona { color: var(--tenue); font-weight: 400; padding-block: 20px 32px; }
+
+.otro {
+  align-self: flex-start;
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 18px;
+  color: var(--acento-tinta);
+  background: var(--acento);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .escarapela:not(.vacia) { animation: aparecer 0.28s ease-out; }
+  @keyframes aparecer { from { transform: translateY(8px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<main class="pagina">
+  <header class="encabezado">
+    <h1>¿Cuál es mi sector?</h1>
+    <p class="entrada-texto">Escribe tu nombre y verás a qué sector perteneces.</p>
+  </header>
+
+  <form class="buscador" id="formulario" autocomplete="off">
+    <label for="nombre">Tu nombre</label>
+    <input id="nombre" type="text" placeholder="Nombre y apellido" autocomplete="off"
+           autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="search">
+    <p class="ayuda">No importan las tildes ni las mayúsculas.</p>
+  </form>
+
+  <section id="resultado" aria-live="polite"></section>
+</main>
+
+<script>
+document.documentElement.lang = 'es';
+
+// Listado generado desde el Excel "Consolidado": nombre y, por cada sector, sus subsectores.
+const PERSONAS = [{"nombre": "Sebastian Bedoya", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Jose Julian Marín", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Wbeimar Tobon", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo rural"]}]}, {"nombre": "Felipe Hoyos", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo rural"]}]}, {"nombre": "David Valencia", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo comunitario"]}]}, {"nombre": "Giovany Muñoz", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Andres Bedoya", "sectores": [{"sector": "Infraestructura", "subsectores": ["Infraestructura"]}]}, {"nombre": "Felipe Rios", "sectores": [{"sector": "Infraestructura", "subsectores": ["Infraestructura"]}]}, {"nombre": "Alejandro Valencia", "sectores": [{"sector": "Infraestructura", "subsectores": ["Infraestructura"]}]}, {"nombre": "Jhon Bedoya", "sectores": [{"sector": "Comunicaciones", "subsectores": ["Comunicaciones"]}]}, {"nombre": "Natalia Román", "sectores": [{"sector": "Hacienda", "subsectores": ["Ingresos"]}]}, {"nombre": "Nelson Fernando Bedoya", "sectores": [{"sector": "Hacienda", "subsectores": ["Manejo"]}]}, {"nombre": "Joer Jaramillo", "sectores": [{"sector": "Hacienda", "subsectores": ["Manejo"]}]}, {"nombre": "Henry Grisales", "sectores": [{"sector": "Hacienda", "subsectores": ["Manejo"]}]}, {"nombre": "Albert Bedoya", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Alejandro Lopez", "sectores": [{"sector": "Cultura", "subsectores": ["Cultura"]}]}, {"nombre": "Sebastián Tobón", "sectores": [{"sector": "Infraestructura", "subsectores": ["Infraestructura"]}]}, {"nombre": "Juan Carlos Jiménez", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Nora Toro Bernal", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Oscar Zapata", "sectores": [{"sector": "Educación", "subsectores": ["Educación"]}]}, {"nombre": "Juliana Tabarez", "sectores": [{"sector": "Educación", "subsectores": ["Educación"]}]}, {"nombre": "Deisy Pavas", "sectores": [{"sector": "Educación", "subsectores": ["PAE"]}]}, {"nombre": "Diego Muñoz", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Juan Carlos Figueroa", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Pablo Sanin Campillo", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Cristian Montoya", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo rural"]}]}, {"nombre": "Leo Bedoya", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Turismo"]}]}, {"nombre": "Juan David Lopez", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Turismo"]}]}, {"nombre": "Maria Carolina Lopez", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Diana Montoya", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Carolina Valencia", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Andres Hernandez", "sectores": [{"sector": "Gobierno", "subsectores": ["Tecnología"]}]}, {"nombre": "Juliana Uribe", "sectores": [{"sector": "Movilidad", "subsectores": ["Movilidad"]}]}, {"nombre": "Luz Marina Builes", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Medio ambiente"]}]}, {"nombre": "Laura del Pilar Echeverry", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Medio ambiente"]}]}, {"nombre": "Vladimir Toro", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Medio ambiente"]}]}, {"nombre": "Laura Isabel Vargas", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Medio ambiente"]}]}, {"nombre": "Paula Silva", "sectores": [{"sector": "Comunicaciones", "subsectores": ["Comunicaciones"]}]}, {"nombre": "Paula Cardona", "sectores": [{"sector": "Comunicaciones", "subsectores": ["Comunicaciones"]}]}, {"nombre": "Cristina Ciro", "sectores": [{"sector": "Hacienda", "subsectores": ["Ingresos"]}]}, {"nombre": "Carolina Montoya", "sectores": [{"sector": "Hacienda", "subsectores": ["Ingresos"]}]}, {"nombre": "Liliana Sanchez", "sectores": [{"sector": "Hacienda", "subsectores": ["Manejo"]}]}, {"nombre": "Juliana Aguirre", "sectores": [{"sector": "Hacienda", "subsectores": ["Manejo"]}]}, {"nombre": "Fredy Valencia", "sectores": [{"sector": "Juventud", "subsectores": ["Juventud"]}]}, {"nombre": "Harold Giraldo", "sectores": [{"sector": "Educación", "subsectores": ["Educación"]}]}, {"nombre": "Claudia Roman", "sectores": [{"sector": "Educación", "subsectores": ["Discapacidad"]}]}, {"nombre": "Ximena Mosquera", "sectores": [{"sector": "Planeación", "subsectores": ["Planeación territorial"]}]}, {"nombre": "Carolina Toro", "sectores": [{"sector": "Salud", "subsectores": ["Adulto mayor", "Familia"]}]}, {"nombre": "Martha Lucia Gaviria", "sectores": [{"sector": "Salud", "subsectores": ["Adulto mayor"]}]}, {"nombre": "Jose Ricardo Ordoñez", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Diana Carvajal", "sectores": [{"sector": "Comunicaciones", "subsectores": ["Comunicaciones"]}]}, {"nombre": "Ricardo Valencia", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Julian Martinez", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Jhony Wilson Gonzales", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Andres Arroyave", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Yeison Pannesso", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Santiago Montoya", "sectores": [{"sector": "Gobierno", "subsectores": ["Tecnología"]}]}, {"nombre": "Juan Bernardo Cardona", "sectores": [{"sector": "Gobierno", "subsectores": ["Tecnología"]}]}, {"nombre": "Luisa Torres", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Servicios públicos"]}]}, {"nombre": "Johana Carmona", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Servicios públicos"]}]}, {"nombre": "Julian Osorio", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Servicios públicos"]}]}, {"nombre": "Leidy García", "sectores": [{"sector": "Servicios públicos y medio ambiente", "subsectores": ["Servicios públicos"]}]}, {"nombre": "Jorge Mario Henao", "sectores": [{"sector": "Educación", "subsectores": ["Educación"]}]}, {"nombre": "Daniela Restrepo", "sectores": [{"sector": "Educación", "subsectores": ["Discapacidad"]}]}, {"nombre": "Santiago Muñoz", "sectores": [{"sector": "Educación", "subsectores": ["Convivencia"]}]}, {"nombre": "Nelson Rios", "sectores": [{"sector": "Educación", "subsectores": ["Educación"]}]}, {"nombre": "Yuli Lopez", "sectores": [{"sector": "Educación", "subsectores": ["Discapacidad"]}]}, {"nombre": "Sami Botero", "sectores": [{"sector": "Educación", "subsectores": ["Convivencia"]}]}, {"nombre": "Juliana Aristizabal", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo rural"]}]}, {"nombre": "Robinson", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Turismo"]}]}, {"nombre": "Paula Botero", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Alejandro Gomez", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Paula Moreno", "sectores": [{"sector": "Gobierno", "subsectores": ["Gobierno"]}]}, {"nombre": "Abel Anselmo Rios", "sectores": [{"sector": "Cultura", "subsectores": ["Cultura"]}]}, {"nombre": "Camilo Arbelaez", "sectores": [{"sector": "Planeación", "subsectores": ["Planeación territorial"]}]}, {"nombre": "Maximiliano Alvarez", "sectores": [{"sector": "Planeación", "subsectores": ["Proyectos estratégicos"]}]}, {"nombre": "Jose Restrepo", "sectores": [{"sector": "Desarrollo económico", "subsectores": ["Desarrollo económico"]}]}, {"nombre": "Carlos Andres Marin", "sectores": [{"sector": "Salud", "subsectores": ["Salud"]}]}, {"nombre": "Jandrey Gomez", "sectores": [{"sector": "Infraestructura", "subsectores": ["Infraestructura"]}]}, {"nombre": "Kevin Giraldo", "sectores": [{"sector": "Movilidad", "subsectores": ["Movilidad"]}]}, {"nombre": "Mónica Pérez", "sectores": [{"sector": "Hacienda", "subsectores": ["Ingresos"]}]}, {"nombre": "Juan Jose Jaramillo", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Alejandro Duque", "sectores": [{"sector": "Deporte", "subsectores": ["Deporte"]}]}, {"nombre": "Isabel Cristina Londoño", "sectores": [{"sector": "Juventud", "subsectores": ["Juventud"]}]}, {"nombre": "Juan Ricardo Carmona", "sectores": [{"sector": "Juventud", "subsectores": ["Juventud"]}]}, {"nombre": "Pastor García", "sectores": [{"sector": "Educación", "subsectores": ["Discapacidad"]}]}, {"nombre": "Manuela Arroyave", "sectores": [{"sector": "Planeación", "subsectores": ["Planeación territorial"]}]}, {"nombre": "Giselda Flores", "sectores": [{"sector": "Salud", "subsectores": ["Adulto mayor"]}]}, {"nombre": "Norman Rios", "sectores": [{"sector": "Vivienda", "subsectores": ["Vivienda"]}]}, {"nombre": "Aleja Henao", "sectores": [{"sector": "Hacienda", "subsectores": ["Ingresos"]}]}];
+
+// ---------- Parámetros de la búsqueda ----------
+// Letras mínimas antes de buscar: con menos, casi cualquier nombre coincide.
+const MIN_LETRAS = 3;
+// Tope de nombres en la lista de candidatos, para que quepa en la pantalla del celular.
+const MAX_CANDIDATOS = 8;
+// Cambiar a false para que la escarapela muestre únicamente el sector.
+const MOSTRAR_SUBSECTOR = true;
+// Partículas que no ayudan a distinguir a una persona ("Laura del Pilar").
+const PALABRAS_VACIAS = new Set(['de', 'del', 'la', 'las', 'los', 'y']);
+// Errores de tecleo permitidos según el largo de la palabra:
+// las palabras cortas no admiten errores porque "Luz" y "Luis" son nombres distintos.
+const LARGO_SIN_ERRORES = 4;   // menos de 4 letras: 0 errores
+const LARGO_DOS_ERRORES = 8;   // 8 letras o más: 2 errores; en medio: 1 error
+// Puntos por palabra según qué tan buena es la coincidencia (solo importa el orden).
+const PUNTOS_EXACTA = 3;
+const PUNTOS_COMIENZO = 2;        // la persona todavía está escribiendo: "sebas" -> "sebastian"
+const PUNTOS_PARECIDA = 1.5;      // palabra completa con algún error de tecleo
+const PUNTOS_COMIENZO_PARECIDO = 1; // comienzo de la palabra con un error
+// Desde este puntaje la coincidencia se considera firme (exacta o comienzo exacto).
+const PUNTOS_FIRME = PUNTOS_COMIENZO;
+// Largo mínimo para aceptar un comienzo con error; con menos letras hay demasiados falsos positivos.
+const LARGO_COMIENZO_PARECIDO = 5;
+
+// ---------- Normalización ----------
+// Pasa a minúsculas y quita tildes, signos y espacios dobles: "  MARÍN " -> "marin".
+function normalizar(texto) {
+  return texto
+    .toLowerCase()
+    .normalize('NFD')                    // separa la letra de su tilde ("í" -> "i" + tilde)
+    .replace(/[̀-ͯ]/g, '')     // borra las tildes ya separadas (la ñ queda como n)
+    .replace(/[^a-z]+/g, ' ')            // todo lo que no sea letra pasa a ser un espacio
+    .trim();
+}
+
+// Iguala letras que en español suenan igual, para que "Jhon/John", "Tabarez/Tabares"
+// o "Giovany/Giovanni" den la misma clave. Se aplica igual al listado y a lo que se escribe,
+// así que lo importante es que sea consistente, no que sea fonética perfecta.
+function claveFonetica(palabra) {
+  return palabra
+    .replace(/h/g, '')            // la h es muda
+    .replace(/ll/g, 'y')
+    .replace(/v/g, 'b')
+    .replace(/z/g, 's')
+    .replace(/c(?=[ei])/g, 's')   // "ce", "ci" suenan como "se", "si"
+    .replace(/y/g, 'i')
+    .replace(/w/g, 'u')
+    .replace(/(.)\1+/g, '$1');    // letras repetidas: "nn" -> "n"
+}
+
+// Convierte un texto en la lista de claves de sus palabras útiles.
+function claves(texto) {
+  return normalizar(texto)
+    .split(' ')
+    .filter(p => p && !PALABRAS_VACIAS.has(p))
+    .map(claveFonetica);
+}
+
+// ---------- Parecido entre palabras ----------
+// Distancia de Levenshtein: cuántas letras hay que cambiar, agregar o quitar
+// para convertir una palabra en la otra. Es lo que permite tolerar errores de tecleo.
+function distancia(a, b) {
+  let anterior = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const actual = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const costo = a[i - 1] === b[j - 1] ? 0 : 1;
+      actual[j] = Math.min(anterior[j] + 1, actual[j - 1] + 1, anterior[j - 1] + costo);
+    }
+    anterior = actual;
+  }
+  return anterior[b.length];
+}
+
+function erroresPermitidos(largo) {
+  if (largo < LARGO_SIN_ERRORES) return 0;
+  if (largo < LARGO_DOS_ERRORES) return 1;
+  return 2;
+}
+
+// Qué tan bien coincide una palabra escrita con una palabra del nombre (0 = no coincide).
+function puntajePalabra(escrita, delNombre) {
+  if (escrita === delNombre) return PUNTOS_EXACTA;
+  if (escrita.length >= 2 && delNombre.startsWith(escrita)) return PUNTOS_COMIENZO;
+  if (distancia(escrita, delNombre) <= erroresPermitidos(escrita.length)) return PUNTOS_PARECIDA;
+  // Error de tecleo mientras aún se escribe: se compara solo con el comienzo de la palabra.
+  if (escrita.length >= LARGO_COMIENZO_PARECIDO && escrita.length < delNombre.length &&
+      distancia(escrita, delNombre.slice(0, escrita.length)) <= 1) return PUNTOS_COMIENZO_PARECIDO;
+  return 0;
+}
+
+// Las claves de cada persona se calculan una sola vez, al cargar la página.
+const INDICE = PERSONAS.map(persona => ({ persona, claves: claves(persona.nombre) }));
+
+// Compara lo escrito con una persona: cuántas palabras coinciden, con qué puntaje,
+// y si todas las coincidencias son firmes (sin depender de corregir errores).
+function evaluar(escritas, entrada) {
+  let coincidencias = 0, puntaje = 0, firme = true;
+  for (const escrita of escritas) {
+    const mejor = Math.max(...entrada.claves.map(c => puntajePalabra(escrita, c)));
+    if (mejor > 0) { coincidencias++; puntaje += mejor; }
+    if (mejor < PUNTOS_FIRME) firme = false;
+  }
+  return { persona: entrada.persona, coincidencias, puntaje, firme };
+}
+
+// Devuelve los candidatos para un texto. Solo quedan quienes coinciden con el mayor número
+// de palabras escritas; así "Carolina Toro" no arrastra a todas las Carolinas.
+function buscar(texto) {
+  const escritas = claves(texto);
+  const evaluadas = INDICE.map(e => evaluar(escritas, e)).filter(r => r.coincidencias > 0);
+  if (evaluadas.length === 0) return { candidatos: [], completa: false };
+  const maximo = Math.max(...evaluadas.map(r => r.coincidencias));
+  const candidatos = evaluadas
+    .filter(r => r.coincidencias === maximo)
+    .sort((a, b) => b.puntaje - a.puntaje || a.persona.nombre.localeCompare(b.persona.nombre, 'es'));
+  // "completa" indica que todas las palabras escritas encontraron pareja.
+  return { candidatos, completa: maximo === escritas.length };
+}
+
+// ---------- Pantalla ----------
+const campo = document.getElementById('nombre');
+const zona = document.getElementById('resultado');
+
+// Crea un elemento con clase y texto. Se usa textContent para que ningún dato se interprete como HTML.
+function crear(etiqueta, clase, texto) {
+  const el = document.createElement(etiqueta);
+  if (clase) el.className = clase;
+  if (texto !== undefined) el.textContent = texto;
+  return el;
+}
+
+function unir(lista) {
+  return lista.length > 1 ? lista.slice(0, -1).join(', ') + ' y ' + lista[lista.length - 1] : lista[0];
+}
+
+function mostrarVacio() {
+  const tarjeta = crear('article', 'escarapela vacia');
+  tarjeta.append(crear('span', 'ranura'), crear('p', 'persona', 'Tu sector aparecerá aquí.'));
+  zona.replaceChildren(tarjeta);
+}
+
+function mostrarEscarapela(persona) {
+  const tarjeta = crear('article', 'escarapela');
+  const ranura = crear('span', 'ranura');
+  ranura.setAttribute('aria-hidden', 'true');
+  tarjeta.append(ranura, crear('p', 'persona', persona.nombre));
+  for (const asignacion of persona.sectores) {
+    const banda = crear('div', 'banda');
+    banda.append(crear('p', 'rotulo', 'Tu sector'), crear('p', 'sector', asignacion.sector));
+    tarjeta.append(banda);
+    // El subsector solo aporta cuando es distinto del sector ("Salud / Salud" no dice nada nuevo).
+    const subs = asignacion.subsectores.filter(s => s !== asignacion.sector);
+    if (MOSTRAR_SUBSECTOR && subs.length > 0) {
+      const bloque = crear('div', 'subsector');
+      bloque.append(crear('p', 'rotulo', subs.length > 1 ? 'Subsectores' : 'Subsector'), crear('p', 'valor', unir(subs)));
+      tarjeta.append(bloque);
+    }
+  }
+  const otro = crear('button', 'otro', 'Buscar otro nombre');
+  otro.type = 'button';
+  otro.addEventListener('click', () => { campo.value = ''; mostrarVacio(); campo.focus(); });
+  zona.replaceChildren(tarjeta, otro);
+}
+
+function mostrarLista(candidatos, aviso) {
+  const lista = crear('ul', 'candidatos');
+  for (const { persona } of candidatos.slice(0, MAX_CANDIDATOS)) {
+    const boton = crear('button', '', persona.nombre);
+    boton.type = 'button';
+    boton.addEventListener('click', () => {
+      campo.blur();               // esconde el teclado para que la escarapela quede a la vista
+      mostrarEscarapela(persona);
+    });
+    const item = crear('li');
+    item.append(boton);
+    lista.append(item);
+  }
+  const partes = [crear('p', 'aviso', aviso), lista];
+  if (candidatos.length > MAX_CANDIDATOS) {
+    partes.push(crear('p', 'aviso-secundario', 'Hay más personas con ese nombre. Escribe también tu apellido.'));
+  }
+  zona.replaceChildren(...partes);
+}
+
+function mostrarNinguno() {
+  zona.replaceChildren(
+    crear('p', 'aviso', 'No encontramos ese nombre.'),
+    crear('p', 'aviso-secundario', 'Prueba solo con tu primer nombre o solo con tu apellido. Si sigue sin aparecer, avísale al equipo organizador.')
+  );
+}
+
+function actualizar() {
+  const texto = campo.value;
+  if (normalizar(texto).replace(/ /g, '').length < MIN_LETRAS) { mostrarVacio(); return; }
+  const { candidatos, completa } = buscar(texto);
+  if (candidatos.length === 0) { mostrarNinguno(); return; }
+  // Se muestra el resultado de una vez solo si hay una única persona y la coincidencia es firme;
+  // si dependió de corregir errores, se pregunta antes para no mostrarle a alguien el sector de otra persona.
+  if (candidatos.length === 1 && completa && candidatos[0].firme) { mostrarEscarapela(candidatos[0].persona); return; }
+  if (candidatos.length === 1) { mostrarLista(candidatos, '¿Eres esta persona? Toca el nombre:'); return; }
+  mostrarLista(candidatos, completa
+    ? 'Encontramos varias personas. Toca tu nombre:'
+    : 'No hay una coincidencia exacta. ¿Eres alguna de estas personas?');
+}
+
+campo.addEventListener('input', actualizar);
+// Al tocar "Buscar" en el teclado no se envía nada: solo se cierra el teclado.
+document.getElementById('formulario').addEventListener('submit', e => { e.preventDefault(); campo.blur(); });
+actualizar();
+</script>
+
+</body>
+</html>
